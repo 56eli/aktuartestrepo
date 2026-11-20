@@ -27,7 +27,7 @@
     {
       "path": "claim_development.csv",
       "rows": 3496,
-      "sha256": "0df87bfd67fc66688b481a1482a5c24bc820fbaee9291dae8e7231ec55258878"
+      "sha256": "c6da1009ef620c118010062076f56f2d4766c8aa9c3a742824f84203a2aa8038"
     },
     {
       "path": "claim_header.csv",
@@ -37,7 +37,7 @@
     {
       "path": "defect_catalog.csv",
       "rows": 6,
-      "sha256": "510a168c62dce980bdbec60ad5accdebe332cb94c6ff0bb2bd57ac74dac5b737"
+      "sha256": "40e825cd84bd3731f1f74a6e66f35d7b002f61539c16996b5735161f5f00f01c"
     },
     {
       "path": "market_curve.csv",

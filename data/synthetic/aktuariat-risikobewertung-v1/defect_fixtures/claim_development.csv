@@ -1,5 +1,5 @@
 claim_id,accident_year,valuation_date,development_months,gross_paid_cumulative_eur,gross_case_reserve_eur,gross_incurred_eur,ceded_paid_cumulative_eur,ceded_case_reserve_eur,ceded_incurred_eur,net_incurred_eur,currency
-CLM-0000001,2019,2019-05-08,3,-10.00,641.28,631.28,0.00,0.00,0.00,784.73,EUR
+CLM-0000001,2019,2019-05-08,3,-10.00,641.28,631.28,0.00,0.00,0.00,631.28,EUR
 CLM-0000001,2019,2019-08-08,6,274.74,422.02,696.76,0.00,0.00,0.00,696.76,EUR
 CLM-0000001,2019,2020-02-08,12,425.06,375.68,800.74,0.00,0.00,0.00,800.74,EUR
 CLM-0000001,2019,2021-02-08,24,562.60,176.44,739.04,0.00,0.00,0.00,739.04,EUR

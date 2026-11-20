@@ -12,9 +12,11 @@ import csv
 import hashlib
 import json
 import math
+import re
 import sys
 from collections import defaultdict
 from datetime import date
+from decimal import Decimal, DecimalException
 from pathlib import Path
 from typing import Any
 
@@ -45,8 +47,16 @@ OPTIONAL_COLUMNS = {
 
 def read_rows(path: Path) -> tuple[list[str], list[dict[str, str]]]:
     with path.open("r", newline="", encoding="utf-8-sig") as handle:
-        reader = csv.DictReader(handle)
-        return list(reader.fieldnames or []), list(reader)
+        reader = csv.DictReader(handle, strict=True)
+        headers = list(reader.fieldnames or [])
+        if not headers or any(not field.strip() for field in headers) or len(headers) != len(set(headers)):
+            raise csv.Error("Missing, empty or duplicate CSV headers")
+        rows = []
+        for row in reader:
+            if None in row or None in row.values():
+                raise csv.Error(f"Wrong column count at line {reader.line_num}")
+            rows.append(row)
+        return headers, rows
 
 
 def sha256_file(path: Path) -> str:
@@ -72,6 +82,7 @@ def validate(directory: Path) -> tuple[list[dict[str, Any]], dict[str, list[dict
     issues: list[dict[str, Any]] = []
     tables: dict[str, list[dict[str, str]]] = {}
     reporting_currency = "EUR"
+    cutoff = None
 
     def issue(code: str, file_name: str, row_key: str, message: str) -> None:
         issues.append({"code": code, "file": file_name, "row_key": row_key, "message": message})
@@ -79,6 +90,9 @@ def validate(directory: Path) -> tuple[list[dict[str, Any]], dict[str, list[dict
     all_schemas = {**REQUIRED_COLUMNS, **OPTIONAL_COLUMNS}
     for filename, required in all_schemas.items():
         path = directory / filename
+        if path.is_symlink():
+            issue("SCHEMA-002", filename, "", "Symbolic links are not dataset files.")
+            continue
         if not path.is_file():
             if filename in REQUIRED_COLUMNS:
                 issue("SCHEMA-001", filename, "", "Required table is missing.")
@@ -103,25 +117,47 @@ def validate(directory: Path) -> tuple[list[dict[str, Any]], dict[str, list[dict
     else:
         try:
             manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-            reporting_currency = str(manifest.get("reporting_currency", manifest.get("currency", "EUR")))
-            entries = manifest.get("row_counts_and_sha256")
-            if entries is None:
-                entries = manifest.get("tables", [])
+            if not isinstance(manifest, dict):
+                raise ValueError("expected a JSON object")
+            reporting_currency = manifest.get("reporting_currency", manifest.get("currency", "EUR"))
+            if not isinstance(reporting_currency, str) or not re.fullmatch(r"[A-Z]{3}", reporting_currency):
+                raise ValueError("invalid reporting currency")
+            native = "row_counts_and_sha256" in manifest
+            cutoff_value = manifest.get("evaluation_cutoff" if native else "reference_date")
+            if native or cutoff_value is not None:
+                cutoff = parse_date(cutoff_value)
+            entries = manifest.get("row_counts_and_sha256" if native else "tables")
+            if not isinstance(entries, list) or not entries:
+                raise ValueError("expected a nonempty table inventory")
+            seen = set()
             for entry in entries:
-                filename = str(entry.get("path", entry.get("file", "")))
+                if not isinstance(entry, dict):
+                    raise ValueError("expected a table object")
+                filename = entry.get("path" if native else "file")
+                if (not isinstance(filename, str) or not re.fullmatch(r"[A-Za-z0-9_-]+\.csv", filename)
+                        or filename in seen):
+                    raise ValueError("invalid or duplicate CSV filename")
+                seen.add(filename)
                 path = directory / filename
+                optional = entry.get("optional", False)
+                if type(optional) is not bool or path.is_symlink():
+                    raise ValueError(f"invalid optional flag or symbolic link: {filename}")
                 if not path.is_file():
-                    if entry.get("optional", False):
-                        continue
-                    issue("DQ-009", filename, "", "Manifested file is missing.")
+                    if not optional or filename in REQUIRED_COLUMNS or native:
+                        issue("DQ-009", filename, "", "Manifested file is missing.")
                     continue
-                _, rows = read_rows(path)
-                expected_rows = entry.get("rows", entry.get("row_count"))
-                if expected_rows is not None and len(rows) != int(expected_rows):
-                    issue("DQ-009", filename, "", "Manifest row count does not match the file.")
+                expected_rows = entry.get("rows" if native else "row_count")
                 expected_hash = entry.get("sha256")
-                if expected_hash and sha256_file(path) != expected_hash:
+                if (type(expected_rows) is not int or expected_rows < 0 or not isinstance(expected_hash, str)
+                        or not re.fullmatch(r"[a-fA-F0-9]{64}", expected_hash)):
+                    raise ValueError(f"invalid row count or SHA-256: {filename}")
+                rows = tables[filename] if filename in tables else read_rows(path)[1]
+                if len(rows) != expected_rows:
+                    issue("DQ-009", filename, "", "Manifest row count does not match the file.")
+                if sha256_file(path) != expected_hash.lower():
                     issue("DQ-009", filename, "", "Manifest checksum does not match the file.")
+            for filename in sorted((set(REQUIRED_COLUMNS) | {p.name for p in directory.glob("*.csv")}) - seen):
+                issue("DQ-009", filename, "", "CSV is not covered by the manifest.")
         except (OSError, ValueError, TypeError, csv.Error) as exc:
             issue("MANIFEST-002", "manifest.json", "", f"Manifest is invalid: {exc}")
 
@@ -182,6 +218,8 @@ def validate(directory: Path) -> tuple[list[dict[str, Any]], dict[str, list[dict
             try:
                 loss_date = parse_date(row.get("loss_date", ""))
                 report_date = parse_date(row.get("report_date", ""))
+                if cutoff is not None and report_date > cutoff:
+                    issue("DQ-017", "claim_header.csv", claim_id, "report_date is after the evaluation cutoff.")
                 if report_date < loss_date:
                     issue("DQ-012", "claim_header.csv", claim_id, "report_date is before loss_date.")
                 if matched_exposure is not None:
@@ -217,6 +255,13 @@ def validate(directory: Path) -> tuple[list[dict[str, Any]], dict[str, list[dict
                 claim = claim_by_id.get(claim_id)
                 if claim and valuation_date < parse_date(claim.get("loss_date", "")):
                     issue("DQ-012", "claim_development.csv", f"{claim_id}:{dev_month}", "valuation_date is before loss_date.")
+                if cutoff is not None and valuation_date > cutoff:
+                    issue("DQ-017", "claim_development.csv", f"{claim_id}:{dev_month}", "valuation_date is after the evaluation cutoff.")
+                if claim and (valuation_date < parse_date(claim.get("report_date", ""))
+                              or int(row.get("accident_year", "")) != parse_date(claim.get("loss_date", "")).year):
+                    issue("DQ-017", "claim_development.csv", f"{claim_id}:{dev_month}", "Valuation precedes reporting or accident year differs from loss year.")
+                if month_int < 0:
+                    issue("DQ-017", "claim_development.csv", f"{claim_id}:{dev_month}", "Negative development age.")
                 paid = parse_number(row.get("gross_paid_cumulative_eur", ""))
                 case_reserve = parse_number(row.get("gross_case_reserve_eur", ""))
                 incurred = parse_number(row.get("gross_incurred_eur", ""))
@@ -226,8 +271,16 @@ def validate(directory: Path) -> tuple[list[dict[str, Any]], dict[str, list[dict
                     issue("DQ-005", "claim_development.csv", f"{claim_id}:{dev_month}", "Case reserve is negative.")
                 if abs((paid + case_reserve) - incurred) > 0.02:
                     issue("DQ-007", "claim_development.csv", f"{claim_id}:{dev_month}", "gross_incurred is not equal to paid + case reserve within rounding tolerance.")
+                amounts = [Decimal(row[field]) for field in (
+                    "gross_incurred_eur", "ceded_paid_cumulative_eur", "ceded_case_reserve_eur",
+                    "ceded_incurred_eur", "net_incurred_eur")]
+                if not all(amount.is_finite() for amount in amounts):
+                    raise ValueError("Non-finite amount")
+                gross, ceded_paid, ceded_case, ceded, net = amounts
+                if max(abs(ceded_paid + ceded_case - ceded), abs(gross - ceded - net)) > Decimal("0.02"):
+                    issue("DQ-018", "claim_development.csv", f"{claim_id}:{dev_month}", "Ceded or net incurred does not reconcile.")
                 paid_by_claim[claim_id].append((month_int, paid, f"{claim_id}:{dev_month}"))
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, DecimalException, KeyError):
                 issue("DQ-012", "claim_development.csv", f"{claim_id}:{dev_month}", "Invalid development month, date, or amount.")
             if row.get("currency") != reporting_currency:
                 issue("DQ-003", "claim_development.csv", f"{claim_id}:{dev_month}", f"Currency does not match reporting_currency {reporting_currency!r}: {row.get('currency', '')!r}.")
@@ -256,10 +309,14 @@ def main() -> int:
         if not catalog_path.is_file():
             print("FEHLER: --expect-defects benötigt defect_catalog.csv", file=sys.stderr)
             return 2
-        _, defects = read_rows(catalog_path)
+        try:
+            _, defects = read_rows(catalog_path)
+        except (OSError, ValueError, csv.Error) as exc:
+            print(f"FEHLER: ungültiger Fehlerkatalog: {exc}", file=sys.stderr)
+            return 2
         expected = {row.get("validator_code", "") for row in defects if row.get("validator_code")}
         found = {item["code"] for item in issues}
-        if expected != found:
+        if not expected or expected != found:
             print(f"Erwartete Fehlercodes: {', '.join(sorted(expected)) or '(keine)'}")
             print(f"Erkannte Fehlercodes:  {', '.join(sorted(found)) or '(keine)'}")
             for item in issues:
