@@ -175,3 +175,14 @@ Vor Aufnahme in eine gemeinsame Testkampagne müssen mindestens folgende Punkte 
 - [ ] Ergebnisse sind durch Run-ID, Codeversion und Datenhash reproduzierbar.
 
 Für den Gesamt-Testplan, Datenquellen, Standards, Szenarien und Präsentationsregeln siehe [`docs/testplan-risikobewertung-aktuar.md`](testplan-risikobewertung-aktuar.md). Für den ausführbaren synthetischen Benchmark siehe [`data/synthetic/aktuariat-risikobewertung-v1/README.md`](../data/synthetic/aktuariat-risikobewertung-v1/README.md).
+
+### Technische Mindestanforderungen an den Manifestabgleich
+
+Jede gelieferte CSV im Normalisierungsordner braucht einen eindeutigen
+Manifest-Eintrag mit lokalem Dateinamen, Zeilenzahl (ohne Header) und SHA-256.
+Nicht gelieferte optionale Tabellen dürfen entfallen oder als `optional: true`
+aufgeführt sein. Wenn `reference_date` angegeben ist, darf kein Melde- oder
+Bewertungsdatum danach liegen. Bewertungsstände dürfen der Meldung nicht
+vorausgehen; zedierte und Netto-Incurred werden mit einer absoluten Toleranz
+von 0,02 in der Reporting-Währung abgestimmt. Diese technischen Regeln
+ersetzen nicht die fachliche Prüfung der jeweiligen Lieferkonventionen.

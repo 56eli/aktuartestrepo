@@ -7,11 +7,13 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
+from generate_testset import generate
 from validate_dataset import validate  # noqa: E402
 
 DATASET = ROOT / "data" / "synthetic" / "aktuariat-risikobewertung-v1"
@@ -61,6 +63,66 @@ class SyntheticTestsetTests(unittest.TestCase):
             }), encoding="utf-8")
             issues, _ = validate(normalized)
         self.assertEqual([], issues)
+
+    def test_generator_preflight_does_not_touch_existing_profiles(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            shutil.copytree(DATASET / "clean", target / "clean")
+            (target / "reference").mkdir()
+            (target / "reference/foreign.txt").write_text("keep")
+            with self.assertRaises(ValueError):
+                generate(target, 50, 11)
+            self.assertEqual((DATASET / "clean/manifest.json").read_bytes(),
+                             (target / "clean/manifest.json").read_bytes())
+            self.assertEqual("keep", (target / "reference/foreign.txt").read_text())
+
+    def test_generator_rolls_back_failed_publish(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder)
+            for name in ("clean", "reference", "defect_fixtures"):
+                shutil.copytree(DATASET / name, target / name)
+            snapshot = lambda: {p.relative_to(target): p.read_bytes() for p in target.rglob("*") if p.is_file()}
+            before = snapshot()
+            original_rename = Path.rename
+
+            def fail_reference(source, destination):
+                if destination == target / "reference" and source.parent.name.startswith(".testset-"):
+                    raise OSError("simulated publish failure")
+                return original_rename(source, destination)
+
+            with patch.object(Path, "rename", fail_reference), self.assertRaisesRegex(OSError, "simulated"):
+                generate(target, 50, 11)
+            self.assertEqual(before, snapshot())
+
+    def test_manifest_rejects_invalid_or_incomplete_inventory(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "clean"
+            shutil.copytree(DATASET / "clean", target)
+            manifest_path = target / "manifest.json"
+            manifest = json.loads(manifest_path.read_text())
+            manifest["row_counts_and_sha256"].pop()
+            for value, code in [({}, "MANIFEST-002"), ([], "MANIFEST-002"), (manifest, "DQ-009")]:
+                with self.subTest(value=value):
+                    manifest_path.write_text(json.dumps(value))
+                    self.assertIn(code, {item["code"] for item in validate(target)[0]})
+
+    def test_correctly_manifested_invalid_valuation_and_net_are_rejected(self):
+        with tempfile.TemporaryDirectory() as folder:
+            target = Path(folder) / "clean"
+            shutil.copytree(DATASET / "clean", target)
+            csv_path = target / "claim_development.csv"
+            lines = csv_path.read_text().splitlines()
+            row = lines[1].split(",")
+            row[2], row[10] = "2030-01-01", "9999999"
+            lines[1] = ",".join(row)
+            csv_path.write_text("\n".join(lines) + "\n")
+            manifest_path = target / "manifest.json"
+            manifest = json.loads(manifest_path.read_text())
+            for entry in manifest["row_counts_and_sha256"]:
+                if entry["path"] == csv_path.name:
+                    entry["sha256"] = hashlib.sha256(csv_path.read_bytes()).hexdigest()
+            manifest_path.write_text(json.dumps(manifest))
+            self.assertEqual({"DQ-017", "DQ-018"}, {item["code"] for item in validate(target)[0]})
 
     def test_ground_truth_is_separate_from_model_inputs(self) -> None:
         clean_files = {path.name for path in (DATASET / "clean").glob("*.csv")}

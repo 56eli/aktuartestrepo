@@ -43,7 +43,7 @@ python scripts/validate_dataset.py data/synthetic/aktuariat-risikobewertung-v1/d
 
 Eigener Seed oder Umfang, ohne die Standardausgabe zu überschreiben:
 
-> Der Generator baut innerhalb des angegebenen Zielordners die Unterordner `clean/`, `reference/` und `defect_fixtures/` neu auf. Er ersetzt dort nur Verzeichnisse mit einem Manifest dieses Testsets; fremde Inhalte führen zum Sicherheitsabbruch. Fremde Dateien trotzdem nicht in diesen Unterordnern ablegen.
+> Der Generator prüft vorab alle drei Profilordner, lehnt fremde Einträge ab und erstellt neue Profile in einem temporären `.testset-*`-Ordner im Ziel. Bei einem Fehler während des Austauschs werden alte Profile zurückverschoben. Nicht parallel auf dasselbe Ziel schreiben. Nach einem harten Prozessabbruch nicht sofort erneut generieren: Der temporäre Ordner kann unter `backups/` noch alte Profile enthalten; vor Wiederherstellung ggf. beide Stände separat sichern.
 
 ```bash
 python scripts/generate_testset.py \

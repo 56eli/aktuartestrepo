@@ -16,6 +16,7 @@ import math
 import random
 import shutil
 import sys
+import tempfile
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -597,7 +598,9 @@ def make_defect_fixture(clean_dir: Path, defect_dir: Path, seed: int) -> None:
         dev_rows[0]["gross_paid_cumulative_eur"] = "-10.00"
         reserve = float(dev_rows[0]["gross_case_reserve_eur"])
         dev_rows[0]["gross_incurred_eur"] = format_money(reserve - 10.0)
-        # Keep derived ceded/net values unchanged: the negative paid amount is the intended defect.
+        incurred = float(dev_rows[0]["gross_incurred_eur"])
+        ceded = float(dev_rows[0]["ceded_incurred_eur"])
+        dev_rows[0]["net_incurred_eur"] = format_money(incurred - ceded)
         duplicate = dict(dev_rows[-1])
         dev_rows.append(duplicate)
     write_csv(dev_path, dev_fields, dev_rows)
@@ -635,7 +638,7 @@ def make_defect_fixture(clean_dir: Path, defect_dir: Path, seed: int) -> None:
         },
         {
             "fixture_id": "DF-006", "validator_code": "DQ-006",
-            "file_name": "claim_development.csv", "row_key": str(dev_rows[-1]["claim_id"]),
+            "file_name": "claim_development.csv", "row_key": f"{dev_rows[-1]['claim_id']}:{dev_rows[-1]['development_months']}",
             "defect_type": "duplicate_claim_development_key",
             "expected_detection": "Flag duplicate claim_id + development_months key.",
         },
@@ -648,23 +651,67 @@ def generate(output_dir: Path, policy_count: int, seed: int) -> None:
     if policy_count < 50:
         raise ValueError("--policies muss mindestens 50 sein, damit die Segmente sinnvoll getestet werden können.")
     output_dir.mkdir(parents=True, exist_ok=True)
-    for name in ("clean", "reference", "defect_fixtures"):
+    if any(output_dir.glob(".testset-*")):
+        raise ValueError(f"Sicherheitsabbruch: offene Generierung/Sicherung in {output_dir}")
+    profiles = {
+        "clean": {"manifest.json", "policy_exposure.csv", "claim_header.csv",
+                  "claim_development.csv", "reinsurance_treaties.csv", "market_curve.csv",
+                  "catastrophe_events.csv", "scenario_catalog.csv"},
+        "reference": {"manifest.json", "claim_ultimate_truth.csv", "policy_year_truth.csv",
+                      "expected_control_totals.json"},
+    }
+    profiles["defect_fixtures"] = profiles["clean"] | {"defect_catalog.csv"}
+    for name, allowed in profiles.items():
         target = output_dir / name
+        if target.is_symlink() or (target.exists() and not target.is_dir()):
+            raise ValueError(f"Sicherheitsabbruch: ungültiger Profilpfad {target}")
         if target.exists() and any(target.iterdir()):
-            existing_manifest = target / "manifest.json"
+            for entry in target.iterdir():
+                if entry.name not in allowed or entry.is_symlink() or not entry.is_file():
+                    raise ValueError(f"Sicherheitsabbruch: unerwarteter Eintrag {entry}")
             try:
-                existing_id = json.loads(existing_manifest.read_text(encoding="utf-8")).get("dataset_id")
-            except (OSError, ValueError, TypeError):
-                existing_id = None
-            if existing_id != "synthetic-actuarial-risk-assessment":
-                raise ValueError(
-                    f"Sicherheitsabbruch: {target} enthält Dateien, aber kein Manifest dieses Testsets; "
-                    "wird nicht überschrieben. Bitte ein leeres/neues Zielverzeichnis wählen."
-                )
-        if target.exists():
-            shutil.rmtree(target)
-        target.mkdir(parents=True, exist_ok=True)
+                manifest = json.loads((target / "manifest.json").read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                manifest = None
+            if not isinstance(manifest, dict) or manifest.get("dataset_id") != "synthetic-actuarial-risk-assessment":
+                raise ValueError(f"Sicherheitsabbruch: kein passendes Manifest in {target}")
 
+    # Same filesystem for directory renames. Keep backups if rollback itself fails.
+    staging = Path(tempfile.mkdtemp(prefix=".testset-", dir=output_dir))
+    backups = staging / "backups"
+    backed_up = []
+    installed = []
+    try:
+        backups.mkdir()
+        row_counts = write_profiles(staging, policy_count, seed)
+        for name in profiles:
+            target = output_dir / name
+            if target.exists():
+                target.rename(backups / name)
+                backed_up.append(name)
+            (staging / name).rename(target)
+            installed.append(name)
+    except BaseException:
+        try:
+            for name in reversed(installed):
+                (output_dir / name).rename(staging / name)
+            for name in reversed(backed_up):
+                (backups / name).rename(output_dir / name)
+        except OSError as exc:
+            raise OSError(f"Wiederherstellung fehlgeschlagen; Sicherungen in {backups}") from exc
+        shutil.rmtree(staging)
+        raise
+    shutil.rmtree(staging)
+    print(f"Testset erstellt: {output_dir}")
+    print(f"  Policen-/Jahresbeobachtungen: {row_counts['policy_exposure.csv']:,}")
+    print(f"  Schadenfälle:                {row_counts['claim_header.csv']:,}")
+    print(f"  Schadenentwicklungszeilen:   {row_counts['claim_development.csv']:,}")
+    print(f"  Zufalls-Seed:                {seed}")
+    print("Profile: clean (Eingabe), reference (Ground Truth; getrennt halten), defect_fixtures (absichtlich fehlerhaft).")
+
+
+
+def write_profiles(output_dir: Path, policy_count: int, seed: int) -> dict[str, int]:
     tables = build_dataset(policy_count, seed)
     clean_dir = output_dir / "clean"
     reference_dir = output_dir / "reference"
@@ -720,12 +767,7 @@ def generate(output_dir: Path, policy_count: int, seed: int) -> None:
     }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     make_defect_fixture(clean_dir, output_dir / "defect_fixtures", seed)
-    print(f"Testset erstellt: {output_dir}")
-    print(f"  Policen-/Jahresbeobachtungen: {row_counts['policy_exposure.csv']:,}")
-    print(f"  Schadenfälle:                {row_counts['claim_header.csv']:,}")
-    print(f"  Schadenentwicklungszeilen:   {row_counts['claim_development.csv']:,}")
-    print(f"  Zufalls-Seed:                {seed}")
-    print("Profile: clean (Eingabe), reference (Ground Truth; getrennt halten), defect_fixtures (absichtlich fehlerhaft).")
+    return row_counts
 
 
 def main() -> int:

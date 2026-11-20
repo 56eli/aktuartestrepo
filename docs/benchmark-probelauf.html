@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Probelauf · Aktuariat-Benchmark v1</title>
+<style>
+body{background:#f3f6fa;color:#172b44;font:16px/1.55 system-ui;margin:0}main{max-width:830px;margin:2rem auto;padding:1rem}
+section{background:white;border:1px solid #dce4ee;border-radius:12px;padding:1.2rem;margin:1rem 0}h1{font-size:2.2rem;line-height:1.1}
+strong{color:#076449}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:.5rem;border-bottom:1px solid #dce4ee}meter{width:65%;accent-color:#076449}code{overflow-wrap:anywhere}
+</style>
+<main><header><p>SYNTHETISCHER NICHTLEBEN-BENCHMARK · V1</p><h1>Reproduzierbarer Probelauf</h1>
+<p>Seed 20261120 · Bewertungsstichtag 2025-12-31</p></header>
+<section><h2><strong>PASS</strong> · Reproduzierbarkeit</h2>
+<ul><li>Alle drei Datenprofile bytegleich zum versionierten Stand</li><li>Clean-Profil ohne Befund; sechs Defekte am erwarteten Datensatzschlüssel</li>
+<li>Zeilenzahlen, Exposition, Prämie und Ultimate-Summen rechnerisch abgestimmt</li></ul></section>
+<section><h2>Beobachtete Schadenfrequenz je Policenjahr</h2><p>Gemeldete Schäden pro 100 Expositionsjahre; unmodellierte Bestandskennzahl.</p>
+<table><thead><tr><th>Jahr</th><th>Schäden</th><th>Expositionsjahre</th><th>Frequenz</th></tr></thead><tbody><tr><th scope="row">2019</th><td>120</td><td>1681.44</td><td><meter min="0" max="10.00" value="7.1367"></meter> 7.14</td></tr>
+<tr><th scope="row">2020</th><td>109</td><td>1676.73</td><td><meter min="0" max="10.00" value="6.5008"></meter> 6.50</td></tr>
+<tr><th scope="row">2021</th><td>109</td><td>1686.65</td><td><meter min="0" max="10.00" value="6.4625"></meter> 6.46</td></tr>
+<tr><th scope="row">2022</th><td>139</td><td>1683.28</td><td><meter min="0" max="10.00" value="8.2577"></meter> 8.26</td></tr>
+<tr><th scope="row">2023</th><td>121</td><td>1683.95</td><td><meter min="0" max="10.00" value="7.1855"></meter> 7.19</td></tr>
+<tr><th scope="row">2024</th><td>140</td><td>1680.37</td><td><meter min="0" max="10.00" value="8.3315"></meter> 8.33</td></tr></tbody></table></section>
+<section><h2>Kontrollsummen</h2><p>738 Schäden · 10092.42 Expositionsjahre</p>
+<p>Ultimate (EUR): 2571928.26 brutto · 9740.83 zediert · 2562187.43 netto.</p>
+<p>Ground Truth dient nur der Abstimmung. Kein Marktvergleich, keine Modellvalidierung und keine regulatorische Freigabe.</p></section>
+<p>Neu erzeugen: <code>python scripts/run_benchmark.py --report docs/benchmark-probelauf.html</code></p></main></html>
