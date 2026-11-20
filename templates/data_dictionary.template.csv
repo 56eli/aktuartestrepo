@@ -1,0 +1,7 @@
+table,field,description,data_type,unit,currency_or_basis,date_semantics,allowed_values,null_semantics,source_field,transformation,quality_rule,owner_role,classification
+policy_exposure.csv,exposure_id,Stable unique key for one exposure row,string,not_applicable,not_applicable,not_applicable,unique,not_null,replace_source_key,stable_pseudonymous_mapping,unique_and_not_empty,data_owner,restricted
+policy_exposure.csv,exposure_years,Exposure represented in year fractions,decimal,policy_year_fraction,not_applicable,observation_period,greater_than_zero,not_null,replace_source_exposure,document_day_count_and_conversion,positive_and_finite,data_owner,restricted
+claim_header.csv,loss_date,Date the insured event occurred,date,not_applicable,not_applicable,occurrence_date,valid_ISO_date,not_null,replace_source_loss_date,source_to_ISO_date,valid_and_within_coverage,claims_data_owner,restricted
+claim_development.csv,gross_paid_cumulative_eur,Cumulative gross paid by valuation date,decimal,EUR,EUR,valuation_date,non_negative,not_null,replace_source_paid,aggregate_movements_to_as_of_date,non_negative_and_monotone,claims_data_owner,restricted
+,,,,,,,,,,,,,
+,,,,,,,,,,,,,

@@ -1,0 +1,4 @@
+cat_event_id,event_date,hazard_type,region,severity_multiplier,event_note
+CAT-2020-FLOOD-WEST,2020-07-18,flood,west,3.20,Synthetic event; not linked to a real disaster.
+CAT-2022-STORM-NORTH,2022-10-06,storm,north,2.80,Synthetic event; not linked to a real disaster.
+CAT-2024-HAIL-SOUTH,2024-06-22,hail,south,2.50,Synthetic event; not linked to a real disaster.

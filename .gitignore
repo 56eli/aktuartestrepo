@@ -1,0 +1,9 @@
+# Third-party / internal policyholder data: never commit incoming source extracts.
+data/incoming/
+
+# Local analysis output for non-synthetic datasets.
+results/local/
+
+# Python bytecode and runtime caches.
+__pycache__/
+*.py[cod]
