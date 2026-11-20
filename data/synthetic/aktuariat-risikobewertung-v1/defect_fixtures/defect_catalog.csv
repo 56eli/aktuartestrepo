@@ -1,0 +1,7 @@
+fixture_id,validator_code,file_name,row_key,defect_type,expected_detection
+DF-001,DQ-001,policy_exposure.csv,EXP-POL-000001-2019,duplicate_exposure_id,Reject or quarantine duplicate exposure key.
+DF-002,DQ-002,policy_exposure.csv,EXP-POL-000002-2019,zero_exposure,Flag non-positive exposure; do not divide or silently impute.
+DF-003,DQ-003,policy_exposure.csv,EXP-POL-000003-2019,currency_mismatch,Flag unsupported currency/unit or require an explicit conversion.
+DF-004,DQ-004,claim_header.csv,CLM-ORPHAN-0001,orphan_claim_reference,Flag claim with no matching exposure/policy record.
+DF-005,DQ-005,claim_development.csv,CLM-0000001:3,negative_cumulative_paid,Flag negative cumulative paid amount.
+DF-006,DQ-006,claim_development.csv,CLM-0000738,duplicate_claim_development_key,Flag duplicate claim_id + development_months key.

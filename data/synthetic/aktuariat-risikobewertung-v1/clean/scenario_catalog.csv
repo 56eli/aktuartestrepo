@@ -1,0 +1,7 @@
+scenario_id,scenario_name,scenario_type,claims_inflation_pct,rate_shift_bp,catastrophe_multiplier,lapse_increase_pct,horizon_years,calibration_status,scenario_note
+BASE,Synthetischer Basisfall,baseline,0,0,1,0,1,synthetic_example_only,Baseline für Pipeline- und Darstellungstests; kein Unternehmensbefund.
+ST-CLAIMS-INFLATION,Schadeninflation,single_factor_stress,10,0,1,0,1,synthetic_example_only,Illustrativer Schock; nicht regulatorisch kalibriert.
+ST-RATE-UP,Zinsanstieg,single_factor_stress,0,200,1,0,1,synthetic_example_only,Illustrativer Schock; nicht regulatorisch kalibriert.
+ST-CAT,Naturgefahren-Kumul,single_factor_stress,0,0,3,0,1,synthetic_example_only,Illustrativer Schock; nicht regulatorisch kalibriert.
+ST-COMBINED,Kombinierter Stress,combined_stress,8,150,2,20,1,synthetic_example_only,Illustrative Kombination; Abhängigkeiten sind nicht vorgegeben.
+ST-REVERSE,Reverse-Stress-Ausgangspunkt,reverse_stress_template,,,,,1,parameterise_for_test,Schocks anhand einer selbst festgelegten Risikoappetitgrenze bestimmen.

@@ -1,0 +1,22 @@
+{
+  "dataset_id": "synthetic-actuarial-risk-assessment",
+  "dataset_version": "1.0.0",
+  "profile": "evaluation_only_reference",
+  "synthetic": true,
+  "seed": 20261120,
+  "files": [
+    {
+      "path": "claim_ultimate_truth.csv",
+      "sha256": "59cd5db3095f5979309e903daae1e4ff9861691583844039479cabf931016d1b"
+    },
+    {
+      "path": "expected_control_totals.json",
+      "sha256": "a344a51bb8c8693f0fc0aee61935cc05ba35f3c24502d5f0cb83450747be7e39"
+    },
+    {
+      "path": "policy_year_truth.csv",
+      "sha256": "686b192c607e00944aebe7680925ca7f0ed1dc79326b286ae18c4bd8cf640562"
+    }
+  ],
+  "warning": "Do not use truth files as model input or include them in features."
+}

@@ -1,0 +1,24 @@
+{
+  "dataset_id": "synthetic-actuarial-risk-assessment",
+  "dataset_version": "1.0.0",
+  "seed": 20261120,
+  "evaluation_cutoff": "2025-12-31",
+  "row_counts": {
+    "policy_exposure.csv": 12000,
+    "claim_header.csv": 738,
+    "claim_development.csv": 3495,
+    "reinsurance_treaties.csv": 2,
+    "market_curve.csv": 336,
+    "catastrophe_events.csv": 3,
+    "scenario_catalog.csv": 6,
+    "claim_ultimate_truth.csv": 738,
+    "policy_year_truth.csv": 12000
+  },
+  "total_exposure_years": 10092.41884,
+  "total_gross_premium_eur": 3473948.92,
+  "reported_claim_count": 738,
+  "gross_ultimate_loss_eur": 2571928.26,
+  "ceded_ultimate_loss_eur": 9740.83,
+  "net_ultimate_loss_eur": 2562187.43,
+  "important": "Truth values are evaluation-only; never join them into model features."
+}

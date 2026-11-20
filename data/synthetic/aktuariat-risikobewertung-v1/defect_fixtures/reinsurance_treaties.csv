@@ -1,0 +1,3 @@
+treaty_id,product,effective_from,effective_to,attachment_eur,limit_eur,participation_pct,treaty_type
+XL-MOTOR-2019-2025,motor,2019-01-01,2025-12-31,25000.00,175000.00,100.00,per_claim_excess_of_loss
+XL-PROPERTY-2019-2025,property,2019-01-01,2025-12-31,50000.00,300000.00,100.00,per_claim_excess_of_loss

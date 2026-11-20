@@ -1,0 +1,69 @@
+{
+  "dataset_id": "replace_with_unique_identifier",
+  "dataset_version": "YYYY-MM-DD-v1",
+  "dataset_status": "draft",
+  "synthetic": false,
+  "data_owner": "name_or_role_not_a_personal_data_export",
+  "source_system": "replace_with_source_system",
+  "purpose_and_test_scope": "state_the_decision_and_tests_supported",
+  "extracted_at_utc": "YYYY-MM-DDThh:mm:ssZ",
+  "reference_date": "YYYY-MM-DD",
+  "observation_period": {
+    "start": "YYYY-MM-DD",
+    "end": "YYYY-MM-DD",
+    "date_semantics": "accident_year_or_policy_year_or_other"
+  },
+  "reporting_currency": "EUR",
+  "amount_basis": "nominal_or_real_and_price_base_if_applicable",
+  "timezone": "UTC",
+  "geography_and_population": "describe_scope_and_exclusions",
+  "license_and_use_rights": {
+    "license_or_contract_reference": "to_be_confirmed",
+    "internal_testing_allowed": "to_be_confirmed",
+    "redistribution_allowed": "to_be_confirmed",
+    "verified_by_role": "to_be_confirmed",
+    "verification_date": "YYYY-MM-DD"
+  },
+  "privacy_and_security": {
+    "personal_data_status": "unknown",
+    "special_category_data_status": "unknown",
+    "lawful_basis_or_approval_reference": "to_be_confirmed",
+    "pseudonymisation_method": "describe_or_not_applicable",
+    "access_classification": "restricted",
+    "retention_or_deletion_date": "YYYY-MM-DD"
+  },
+  "tables": [
+    {
+      "file": "policy_exposure.csv",
+      "grain": "one_row_per_policy_exposure_period",
+      "row_count": null,
+      "sha256": "replace_with_sha256",
+      "primary_key": ["exposure_id"],
+      "source_control_totals": {}
+    },
+    {
+      "file": "claim_header.csv",
+      "grain": "one_row_per_claim",
+      "row_count": null,
+      "sha256": "replace_with_sha256",
+      "primary_key": ["claim_id"],
+      "source_control_totals": {}
+    },
+    {
+      "file": "claim_development.csv",
+      "grain": "one_row_per_claim_and_valuation_date_or_development_age",
+      "optional": true,
+      "row_count": null,
+      "sha256": "replace_with_sha256",
+      "primary_key": ["claim_id", "development_months"],
+      "source_control_totals": {}
+    }
+  ],
+  "transformations": [],
+  "known_limitations": [],
+  "approvals": {
+    "data_owner": "pending",
+    "privacy_or_compliance": "pending",
+    "actuarial_owner": "pending"
+  }
+}

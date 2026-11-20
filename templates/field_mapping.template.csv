@@ -1,0 +1,9 @@
+source_table,source_field,target_table,target_field,source_data_type,target_data_type,unit_or_currency,null_semantics,transformation,validation_rule,required,notes
+policy_extract,replace_source_policy_key,policy_exposure.csv,policy_id,string,string,not_applicable,not_null,stable_pseudonymous_key,unique_or_stable_by_contract,true,Do not export a direct identifier
+policy_extract,replace_source_start_date,policy_exposure.csv,inception_date,date_iso,date_iso,YYYY-MM-DD,not_null,source_to_iso_date,inception_date_lte_expiry_date,true,Record source timezone/date semantics
+policy_extract,replace_source_earned_exposure,policy_exposure.csv,exposure_years,decimal,decimal,policy_year_fraction,not_null,source_unit_to_year_fraction,greater_than_zero,true,Document day-count convention
+claim_extract,replace_source_claim_key,claim_header.csv,claim_id,string,string,not_applicable,not_null,stable_pseudonymous_key,unique,true,Do not export a direct identifier
+claim_extract,replace_source_loss_date,claim_header.csv,loss_date,date_iso,date_iso,YYYY-MM-DD,not_null,source_to_iso_date,valid_date_and_policy_period,true,Specify occurrence/notification semantics
+claim_history,replace_source_paid_to_date,claim_development.csv,gross_paid_cumulative_eur,decimal,decimal,EUR,not_null,convert_to_reporting_currency_and_cumulative,non_negative_and_monotone,true,Only if a reserving/development test is in scope
+,,,,,,,,,,,
+,,,,,,,,,,,

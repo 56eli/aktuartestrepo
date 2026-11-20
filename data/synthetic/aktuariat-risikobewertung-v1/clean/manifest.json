@@ -1,0 +1,64 @@
+{
+  "dataset_id": "synthetic-actuarial-risk-assessment",
+  "dataset_version": "1.0.0",
+  "profile": "clean",
+  "synthetic": true,
+  "generator": "scripts/generate_testset.py",
+  "generator_version": "1.0.0",
+  "seed": 20261120,
+  "policy_count_per_accident_year": 2000,
+  "accident_years": [
+    2019,
+    2020,
+    2021,
+    2022,
+    2023,
+    2024
+  ],
+  "evaluation_cutoff": "2025-12-31",
+  "currency": "EUR",
+  "reporting_currency": "EUR",
+  "row_counts_and_sha256": [
+    {
+      "path": "catastrophe_events.csv",
+      "rows": 3,
+      "sha256": "f279b497e0b9f22872ae0e4b44d79bea341fe463617e748f1791fc2666405a36"
+    },
+    {
+      "path": "claim_development.csv",
+      "rows": 3495,
+      "sha256": "c19f7996f0b724b486d6d334fcd2c3fc6a492e6e029d34375613c6ebf109b95d"
+    },
+    {
+      "path": "claim_header.csv",
+      "rows": 738,
+      "sha256": "e5b1e1b83d1162ff668a81ae69852fefde5177a357654919964700689214f22a"
+    },
+    {
+      "path": "market_curve.csv",
+      "rows": 336,
+      "sha256": "f8e68b2070d617cc469f2133053e3bf00bf0733a7c1c8996192a760680a0159d"
+    },
+    {
+      "path": "policy_exposure.csv",
+      "rows": 12000,
+      "sha256": "119ea96a4b04711418a6e9521e9a782772e9ba159b71afa387eb19f73c0181b3"
+    },
+    {
+      "path": "reinsurance_treaties.csv",
+      "rows": 2,
+      "sha256": "b80abe3682697743d287d48c126db3b6e85bc6d9104ebc42bd8922debe5730c4"
+    },
+    {
+      "path": "scenario_catalog.csv",
+      "rows": 6,
+      "sha256": "18297e85f02c31c8cd3a54165064204331adb0ec3ca16e48a8d67e246584c8cc"
+    }
+  ],
+  "notes": [
+    "Fully synthetic; no real insurer, contract, person, or claim records.",
+    "Market curves and catastrophe events are synthetic and are not official data.",
+    "Scenario shocks are illustrative test parameters, not regulatory calibration.",
+    "Reference truth files are evaluation-only and must not be used as model inputs."
+  ]
+}
