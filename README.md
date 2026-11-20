@@ -32,3 +32,15 @@ bytegenau, prüft die Defekte nach Code/Datei/Schlüssel und rechnet die Referen
 nach. Der [grafische Probelauf](docs/benchmark-probelauf.html) zeigt die beobachtete
 Schadenfrequenz je Policenjahr; er ist keine Modellvalidierung. CI prüft auch die
 Reproduzierbarkeit des HTML-Berichts. Siehe [Umsetzungsplan](docs/umsetzungsplan-industriestandard.md).
+
+## Visuelle Testfixtures
+
+Die [Diagrammgalerie für Versicherungsrisiken](docs/visualisierung/index.html)
+enthält berechnete Beispiele und getrennt gekennzeichnete Lehrgrafiken.
+Offline öffnen oder im Browser als PDF drucken. Neu erzeugen:
+
+```bash
+python scripts/render_gallery.py
+```
+
+[Visueller Abnahmeauftrag und Abdeckung](docs/visualisierung/abnahme.md).

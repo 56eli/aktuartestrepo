@@ -17,3 +17,6 @@ jobs:
       - run: |
           python scripts/run_benchmark.py --report "$RUNNER_TEMP/benchmark.html"
           diff -u docs/benchmark-probelauf.html "$RUNNER_TEMP/benchmark.html"
+      - run: |
+          python scripts/render_gallery.py --output "$RUNNER_TEMP/gallery.html"
+          diff -u docs/visualisierung/index.html "$RUNNER_TEMP/gallery.html"
